@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-public class UangKeluar {
+public class UangKeluar extends BaseEntity{
     @Id
     private String traceNumber;
     private LocalDateTime tanggal;

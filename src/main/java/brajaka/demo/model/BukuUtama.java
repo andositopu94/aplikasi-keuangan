@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = "trace_number"))
-public class BukuUtama {
+public class BukuUtama extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String traceNumber;
@@ -25,12 +25,12 @@ public class BukuUtama {
     private String jenisRekening;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "akun_id", referencedColumnName = "kodeAkun")
+    @JoinColumn(name = "kode_akun", referencedColumnName = "kodeAkun")
     private Akun akun;
 
 //    @ManyToOne(fetch = FetchType.EAGER)
     @ManyToOne(optional = false)
-    @JoinColumn(name = "kegiatan_id", referencedColumnName = "kodeKegiatan")
+    @JoinColumn(name = "kode_kegiatan", referencedColumnName = "kodeKegiatan")
     private Kegiatan kegiatan;
 
     public String getTraceNumber() {

@@ -44,9 +44,38 @@ public class LaporanLapanganService {
         laporan.setBuktiPath(buktiPath);
         laporan.setAkun(akun);
         laporan.setKegiatan(kegiatan);
+        laporan.setNamaUser(request.getNamaUser());
 
         return repository.save(laporan);
 
     }
 
+    public LaporanLapangan updateLaporan(Long id, LaporanLapanganRequest request, MultipartFile bukti) {
+        LaporanLapangan laporan = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Laporan Tidak Ditemukan"));
+
+        if (request.getTanggal() != null) laporan.setTanggal(request.getTanggal());
+        laporan.setKodeLapangan(request.getKodeLapangan());
+        laporan.setDeskripsi(request.getDeskripsi());
+        laporan.setDebit(request.getDebit());
+        laporan.setKredit(request.getKredit());
+        laporan.setKeterangan(request.getKeterangan());
+        laporan.setNamaUser(request.getNamaUser());
+
+        if (request.getKodeAkun() != null){
+            Akun akun = akunRepository.findById(request.getKodeAkun())
+                    .orElseThrow(() -> new RuntimeException("Akun Tidak Ditemukan"));
+            laporan.setAkun(akun);
+        }
+        if (request.getKodeKegiatan() != null){
+            Kegiatan kegiatan = kegiatanRepository.findById(request.getKodeKegiatan())
+                    .orElseThrow(() -> new RuntimeException("Kegiatan Tidak Ditemukan"));
+            laporan.setKegiatan(kegiatan);
+        }
+        if (bukti != null && !bukti.isEmpty()) {
+            String buktiPath = fileStrorageService.storeFile(bukti);
+            laporan.setBuktiPath(buktiPath);
+        }
+        return repository.save(laporan);
+    }
 }

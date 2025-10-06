@@ -3,18 +3,26 @@ package brajaka.demo.dto;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-public class LaporanLapanganRequest {
-
+public class LaporanLapanganResponse {
+    private Long id;
     private LocalDateTime tanggal;
     private String kodeLapangan;
     private String deskripsi;
-    private String kodeAkun;
     private BigDecimal debit;
     private BigDecimal kredit;
     private String keterangan;
+    private String buktiPath;
+    private String kodeAkun;
     private String kodeKegiatan;
-    private String namaKegiatan;
     private String namaUser;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public LocalDateTime getTanggal() {
         return tanggal;
@@ -38,14 +46,6 @@ public class LaporanLapanganRequest {
 
     public void setDeskripsi(String deskripsi) {
         this.deskripsi = deskripsi;
-    }
-
-    public String getKodeAkun() {
-        return kodeAkun;
-    }
-
-    public void setKodeAkun(String kodeAkun) {
-        this.kodeAkun = kodeAkun;
     }
 
     public BigDecimal getDebit() {
@@ -72,20 +72,28 @@ public class LaporanLapanganRequest {
         this.keterangan = keterangan;
     }
 
+    public String getBuktiPath() {
+        return buktiPath;
+    }
+
+    public void setBuktiPath(String buktiPath) {
+        this.buktiPath = buktiPath;
+    }
+
+    public String getKodeAkun() {
+        return kodeAkun;
+    }
+
+    public void setKodeAkun(String kodeAkun) {
+        this.kodeAkun = kodeAkun;
+    }
+
     public String getKodeKegiatan() {
         return kodeKegiatan;
     }
 
     public void setKodeKegiatan(String kodeKegiatan) {
         this.kodeKegiatan = kodeKegiatan;
-    }
-
-    public String getNamaKegiatan() {
-        return namaKegiatan;
-    }
-
-    public void setNamaKegiatan(String namaKegiatan) {
-        this.namaKegiatan = namaKegiatan;
     }
 
     public String getNamaUser() {

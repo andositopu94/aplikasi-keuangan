@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-public class LaporanLapangan {
+public class LaporanLapangan extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -107,11 +107,11 @@ public class LaporanLapangan {
         this.buktiPath = buktiPath;
     }
 
-    public String getUser() {
+    public String getNamaUser() {
         return namaUser;
     }
 
-    public void setUser(String user) {
+    public void setNamaUser(String namaUser) {
         this.namaUser = namaUser;
     }
 }

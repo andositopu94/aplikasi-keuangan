@@ -137,10 +137,15 @@ public class BukuUtamaController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBukuUtama(@PathVariable String id){
+        BukuUtama existing= bukuUtamaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Data Tidak Ditemukan"));
         if (!bukuUtamaRepository.existsById(id)){
             return ResponseEntity.notFound().build();
         }
+        LocalDateTime tanggalTransaksi = existing.getTanggal();
         bukuUtamaRepository.deleteById(id);
+        bukuUtamaService.updateSaldoBerantai(tanggalTransaksi);
+
         return ResponseEntity.noContent().build();
     }
 
