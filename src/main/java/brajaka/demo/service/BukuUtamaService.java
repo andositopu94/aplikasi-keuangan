@@ -8,8 +8,10 @@ import brajaka.demo.model.*;
 import brajaka.demo.repository.AkunRepository;
 import brajaka.demo.repository.BukuUtamaRepository;
 import brajaka.demo.repository.KegiatanRepository;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -22,7 +24,6 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 @Transactional
 @Service
 public class BukuUtamaService {
@@ -206,6 +207,7 @@ public class BukuUtamaService {
 
     //jika ada saldo yang diedit pd tanggal sebelumnya
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = {"historiCash","historiMainBCA","historiBCADir","historiPCU","historiAll"}, allEntries = true)
     public void updateSaldoBerantai(LocalDateTime dariTanggal){
         List<BukuUtama> daftar = bukuUtamaRepository.findByTanggalAfterOrderByTanggalAsc(dariTanggal);
         if (daftar.isEmpty()) return;
@@ -240,6 +242,7 @@ public class BukuUtamaService {
         }
     }
 
+    @Cacheable(value = "saldoTerakhir", key = "#jenisRekening")
     public BigDecimal getSaldoTerakhirSampaiTanggal(LocalDateTime tanggal, String jenisRekening) {
         return bukuUtamaRepository.findTop1ByJenisRekeningIgnoreCaseAndTanggalLessThanOrderByTanggalDesc(jenisRekening, tanggal)
                 .stream()
@@ -282,54 +285,56 @@ public class BukuUtamaService {
         }).toList();
     }
 
+    @Cacheable(value = "historiCash", key = "#start.toString() + '-' + #end.toString()")
     public List<HistoriSaldoDto>getHistoriSaldoCash(LocalDate start, LocalDate end){
-        LocalDateTime startDate = start.atStartOfDay();
-        LocalDateTime endDate = end.atTime(LocalTime.MAX);
+//        LocalDateTime startDate = start.atStartOfDay();
+//        LocalDateTime endDate = end.atTime(LocalTime.MAX);
 
-        return bukuUtamaRepository.findByJenisRekeningAndTanggalBetween("Cash", startDate, endDate)
+        return bukuUtamaRepository.findByJenisRekeningAndTanggalBetween("Cash", start.atStartOfDay(), end.atTime(LocalTime.MAX))
                 .stream()
                 .map(buku -> new HistoriSaldoDto(buku.getTanggal().toLocalDate(),
-                        buku.getSaldoCash(), null, null, null)).collect(Collectors.toList());
+                        buku.getSaldoCash(), null, null, null)).toList();
 
     }
 
+    @Cacheable(value = "historiMainBCA", key = "#start.toString() + '-' + #end.toString()")
     public List<HistoriSaldoDto>getHistoriSaldoMainBCA(LocalDate start, LocalDate end){
-        LocalDateTime startDate = start.atStartOfDay();
-        LocalDateTime endDate = end.atTime(LocalTime.MAX);
+//        LocalDateTime startDate = start.atStartOfDay();
+//        LocalDateTime endDate = end.atTime(LocalTime.MAX);
 
-        return bukuUtamaRepository.findByJenisRekeningAndTanggalBetween("Main BCA", startDate, endDate)
+        return bukuUtamaRepository.findByJenisRekeningAndTanggalBetween("Main BCA", start.atStartOfDay(), end.atTime(LocalTime.MAX))
                 .stream().map(buku -> new HistoriSaldoDto(buku.getTanggal().toLocalDate(),
                         null,
                         buku.getSaldoMainBCA(),
                         null,
                         null))
-                .collect(Collectors.toList());
+                .toList();
     }
-
+    @Cacheable(value = "historiBCADir", key = "#start.toString() + '-' + #end.toString()")
     public List<HistoriSaldoDto>getHistoriSaldoBCADir(LocalDate start, LocalDate end){
-        LocalDateTime startDate = start.atStartOfDay();
-        LocalDateTime endDate = end.atTime(LocalTime.MAX);
+//        LocalDateTime startDate = start.atStartOfDay();
+//        LocalDateTime endDate = end.atTime(LocalTime.MAX);
 
-        return bukuUtamaRepository.findByJenisRekeningAndTanggalBetween("BCA Dir", startDate, endDate)
+        return bukuUtamaRepository.findByJenisRekeningAndTanggalBetween("BCA Dir", start.atStartOfDay(), end.atTime(LocalTime.MAX))
                 .stream().map(buku -> new HistoriSaldoDto(buku.getTanggal().toLocalDate(),
                         null,
                         null,
                         buku.getSaldoBCADir(),
                         null))
-                .collect(Collectors.toList());
+                .toList();
     }
-
+    @Cacheable(value = "historiPCU", key = "#start.toString() + '-' + #end.toString()")
     public List<HistoriSaldoDto>getHistoriSaldoPCU(LocalDate start, LocalDate end){
-        LocalDateTime startDate = start.atStartOfDay();
-        LocalDateTime endDate = end.atTime(LocalTime.MAX);
+//        LocalDateTime startDate = start.atStartOfDay();
+//        LocalDateTime endDate = end.atTime(LocalTime.MAX);
 
-        return bukuUtamaRepository.findByJenisRekeningAndTanggalBetween("PCU", startDate, endDate)
+        return bukuUtamaRepository.findByJenisRekeningAndTanggalBetween("PCU", start.atStartOfDay(), end.atTime(LocalTime.MAX))
                 .stream().map(buku -> new HistoriSaldoDto(buku.getTanggal().toLocalDate(),
                         null,
                         null,
                         null,
                         buku.getSaldoPCU()))
-                .collect(Collectors.toList());
+                .toList();
     }
     private Function<BukuUtama, BigDecimal> getSaldoFunction(String jenisRekening){
         return switch (jenisRekening){

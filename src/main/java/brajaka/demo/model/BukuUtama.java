@@ -27,8 +27,6 @@ public class BukuUtama extends BaseEntity{
     @ManyToOne(optional = false)
     @JoinColumn(name = "kode_akun", referencedColumnName = "kodeAkun")
     private Akun akun;
-
-//    @ManyToOne(fetch = FetchType.EAGER)
     @ManyToOne(optional = false)
     @JoinColumn(name = "kode_kegiatan", referencedColumnName = "kodeKegiatan")
     private Kegiatan kegiatan;

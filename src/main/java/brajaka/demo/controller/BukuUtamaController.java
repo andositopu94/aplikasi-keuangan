@@ -15,6 +15,7 @@ import brajaka.demo.service.BukuUtamaService;
 import brajaka.demo.service.ExportService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -163,26 +164,16 @@ public class BukuUtamaController {
         return saldoMap;
     }
 
-    @GetMapping("/histori/cash")
-    public List<HistoriSaldoDto> getHistoriSaldoCash(@RequestParam LocalDate tanggalAwal,
-                                                     @RequestParam LocalDate tanggalAkhir){
-        return bukuUtamaService.getHistoriSaldoCash(tanggalAwal, tanggalAkhir);
-    }
-
-    @GetMapping("/histori/main-bca")
-    public List<HistoriSaldoDto> getHistoriSaldoMainBCA(@RequestParam LocalDate tanggalAwal,
-                                                        @RequestParam LocalDate tanggalAkhir){
-        return bukuUtamaService.getHistoriSaldoMainBCA(tanggalAwal, tanggalAkhir);
-    }
-    @GetMapping("histori/bca-dir")
-    public List<HistoriSaldoDto> getHistoriSaldoBCADir(@RequestParam LocalDate tanggalAwal,
-                                                       @RequestParam LocalDate tanggalAkhir){
-        return bukuUtamaService.getHistoriSaldoBCADir(tanggalAwal, tanggalAkhir);
-    }
-    @GetMapping("/histori/pcu")
-    public List<HistoriSaldoDto> getHistoriSaldoPCU(@RequestParam LocalDate tanggalAwal,
-                                                    @RequestParam LocalDate tanggalAkhir) {
-        return bukuUtamaService.getHistoriSaldoPCU(tanggalAwal, tanggalAkhir);
+    @Cacheable(value = "historiAll", key = "#tanggalAwal.toString() + '_' + #tanggalAkhir.toString()")
+    @GetMapping("/histori/all")
+    public Map<String, List<HistoriSaldoDto>> getAllHistori (@RequestParam LocalDate tanggalAwal,
+                                                          @RequestParam LocalDate tanggalAkhir) {
+        Map<String, List<HistoriSaldoDto>> result = new HashMap<>();
+        result.put("cash", bukuUtamaService.getHistoriSaldoCash(tanggalAwal, tanggalAkhir));
+        result.put("mainBca", bukuUtamaService.getHistoriSaldoMainBCA(tanggalAwal, tanggalAkhir));
+        result.put("bcaDir", bukuUtamaService.getHistoriSaldoBCADir(tanggalAwal, tanggalAkhir));
+        result.put("pcu", bukuUtamaService.getHistoriSaldoPCU(tanggalAwal, tanggalAkhir));
+        return result;
     }
 
     @GetMapping("/export/excel")
