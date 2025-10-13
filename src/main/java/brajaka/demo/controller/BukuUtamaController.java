@@ -15,7 +15,6 @@ import brajaka.demo.service.BukuUtamaService;
 import brajaka.demo.service.ExportService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -164,7 +163,7 @@ public class BukuUtamaController {
         return saldoMap;
     }
 
-    @Cacheable(value = "historiAll", key = "#tanggalAwal.toString() + '_' + #tanggalAkhir.toString()")
+//    @Cacheable(value = "historiAll", key = "#tanggalAwal.toString() + '_' + #tanggalAkhir.toString()")
     @GetMapping("/histori/all")
     public Map<String, List<HistoriSaldoDto>> getAllHistori (@RequestParam LocalDate tanggalAwal,
                                                           @RequestParam LocalDate tanggalAkhir) {
@@ -218,37 +217,93 @@ public class BukuUtamaController {
         return ResponseEntity.ok("Saldo Berhasil diperbaharui");
     }
 
-    @PutMapping("/{traceNumber}")
-    public ResponseEntity<BukuUtamaDto> updateBukuUtama(
-            @PathVariable String traceNumber,
-            @RequestBody @Valid BukuUtamaDto dto) {
+//    @PutMapping("/{traceNumber}")
+//    public ResponseEntity<BukuUtamaDto> updateBukuUtama(
+//            @PathVariable String traceNumber,
+//            @RequestBody @Valid BukuUtamaDto dto) {
+//
+//        return bukuUtamaRepository.findById(traceNumber)
+//                .map(existing -> {
+//                    // 1. update scalar fields
+//                    existing.setTanggal(dto.getTanggal());
+//                    existing.setKodeTransaksi(dto.getKodeTransaksi());
+//                    existing.setJenisRekening(dto.getJenisRekening());
+//                    existing.setNominalMasuk(dto.getNominalMasuk());
+//                    existing.setNominalKeluar(dto.getNominalKeluar());
+//                    existing.setSumberRekening(dto.getSumberRekening());
+//                    existing.setRekeningTujuan(dto.getRekeningTujuan());
+//                    existing.setDeskripsi(dto.getDeskripsi());
+//
+//                    // 2. update relations
+//                    Akun akun = akunRepository.findById(dto.getKodeAkun())
+//                            .orElseThrow(() -> new RuntimeException("Akun tidak ditemukan"));
+//                    existing.setAkun(akun);
+//
+//                    Kegiatan kegiatan = kegiatanRepository.findById(dto.getKodeKegiatan())
+//                            .orElseThrow(() -> new RuntimeException("Kegiatan tidak ditemukan"));
+//                    existing.setKegiatan(kegiatan);
+//
+//                    BukuUtama saved = bukuUtamaRepository.save(existing);
+//                    bukuUtamaService.updateSaldoBerantai(saved.getTanggal()); // re-calc saldo
+//
+//                    return ResponseEntity.ok(BukuUtamaMapper.toDTO(saved));
+//                })
+//                .orElse(ResponseEntity.notFound().build());
+//    }
+@PutMapping("/{traceNumber}")
+public ResponseEntity<?> updateBukuUtama(
+        @PathVariable String traceNumber,
+        @RequestBody @Valid BukuUtamaDto dto,
+        BindingResult result) {
 
+    if (result.hasErrors()) {
+        Map<String, String> errors = new HashMap<>();
+        result.getFieldErrors().forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
+        return ResponseEntity.badRequest().body(errors);
+    }
+
+    try {
         return bukuUtamaRepository.findById(traceNumber)
                 .map(existing -> {
-                    // 1. update scalar fields
+                    // Validasi tanggal
+                    if (dto.getTanggal().toLocalDate().isAfter(LocalDate.now())) {
+                        throw new RuntimeException("Tanggal tidak boleh lebih dari hari ini");
+                    }
+
+                    // Update fields
                     existing.setTanggal(dto.getTanggal());
                     existing.setKodeTransaksi(dto.getKodeTransaksi());
                     existing.setJenisRekening(dto.getJenisRekening());
-                    existing.setNominalMasuk(dto.getNominalMasuk());
-                    existing.setNominalKeluar(dto.getNominalKeluar());
+                    existing.setNominalMasuk(dto.getNominalMasuk() != null ? dto.getNominalMasuk() : BigDecimal.ZERO);
+                    existing.setNominalKeluar(dto.getNominalKeluar() != null ? dto.getNominalKeluar() : BigDecimal.ZERO);
                     existing.setSumberRekening(dto.getSumberRekening());
                     existing.setRekeningTujuan(dto.getRekeningTujuan());
                     existing.setDeskripsi(dto.getDeskripsi());
 
-                    // 2. update relations
-                    Akun akun = akunRepository.findById(dto.getKodeAkun())
-                            .orElseThrow(() -> new RuntimeException("Akun tidak ditemukan"));
-                    existing.setAkun(akun);
+                    // Update relations
+                    if (dto.getKodeAkun() != null) {
+                        Akun akun = akunRepository.findById(dto.getKodeAkun())
+                                .orElseThrow(() -> new RuntimeException("Akun tidak ditemukan"));
+                        existing.setAkun(akun);
+                    }
 
-                    Kegiatan kegiatan = kegiatanRepository.findById(dto.getKodeKegiatan())
-                            .orElseThrow(() -> new RuntimeException("Kegiatan tidak ditemukan"));
-                    existing.setKegiatan(kegiatan);
+                    if (dto.getKodeKegiatan() != null) {
+                        Kegiatan kegiatan = kegiatanRepository.findById(dto.getKodeKegiatan())
+                                .orElseThrow(() -> new RuntimeException("Kegiatan tidak ditemukan"));
+                        existing.setKegiatan(kegiatan);
+                    }
 
                     BukuUtama saved = bukuUtamaRepository.save(existing);
-                    bukuUtamaService.updateSaldoBerantai(saved.getTanggal()); // re-calc saldo
+                    bukuUtamaService.updateSaldoBerantai(saved.getTanggal());
 
                     return ResponseEntity.ok(BukuUtamaMapper.toDTO(saved));
                 })
                 .orElse(ResponseEntity.notFound().build());
+
+    } catch (Exception e) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", e.getMessage());
+        return ResponseEntity.badRequest().body(error);
     }
+}
 }

@@ -22,6 +22,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 @Transactional
@@ -244,19 +245,39 @@ public class BukuUtamaService {
 
     @Cacheable(value = "saldoTerakhir", key = "#jenisRekening")
     public BigDecimal getSaldoTerakhirSampaiTanggal(LocalDateTime tanggal, String jenisRekening) {
-        return bukuUtamaRepository.findTop1ByJenisRekeningIgnoreCaseAndTanggalLessThanOrderByTanggalDesc(jenisRekening, tanggal)
-                .stream()
-                .findFirst()
-                .map(buku -> {
-                    switch (jenisRekening) {
-                        case "Cash": return buku.getSaldoCash();
-                        case "Main BCA": return buku.getSaldoMainBCA();
-                        case "BCA Dir": return buku.getSaldoBCADir();
-                        case "PCU": return buku.getSaldoPCU();
-                        default:return BigDecimal.ZERO;
-                    }
-                })
-                .orElse(BigDecimal.ZERO);
+//        return bukuUtamaRepository.findTop1ByJenisRekeningIgnoreCaseAndTanggalLessThanOrderByTanggalDesc(jenisRekening, tanggal)
+//                .stream()
+//                .findFirst()
+//                .map(buku -> {
+//                    switch (jenisRekening) {
+//                        case "Cash": return buku.getSaldoCash();
+//                        case "Main BCA": return buku.getSaldoMainBCA();
+//                        case "BCA Dir": return buku.getSaldoBCADir();
+//                        case "PCU": return buku.getSaldoPCU();
+//                        default:return BigDecimal.ZERO;
+//                    }
+//                })
+//                .orElse(BigDecimal.ZERO);
+        Optional<BukuUtama> bukuOpt = bukuUtamaRepository.findFirstByJenisRekeningAndTanggalBeforeOrderByTanggalDesc(jenisRekening, tanggal);
+
+        if (bukuOpt.isPresent()) {
+            BukuUtama buku = bukuOpt.get();
+            switch (jenisRekening) {
+                case "Cash":
+                    return buku.getSaldoCash() != null ? buku.getSaldoCash() : BigDecimal.ZERO;
+                case "Main BCA":
+                    return buku.getSaldoMainBCA() != null ? buku.getSaldoMainBCA() : BigDecimal.ZERO;
+                case "BCA Dir":
+                    return buku.getSaldoBCADir() != null ? buku.getSaldoBCADir() : BigDecimal.ZERO;
+                case "PCU":
+                    return buku.getSaldoPCU() != null ? buku.getSaldoPCU() : BigDecimal.ZERO;
+                default:
+                    return BigDecimal.ZERO;
+            }
+        }
+
+        // Jika tidak ada data sebelumnya, return 0
+        return BigDecimal.ZERO;
     }
 
     public List<LaporanGroupDto> getLaporanGroupByAkun(){

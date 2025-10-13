@@ -34,10 +34,18 @@ public interface BukuUtamaRepository extends JpaRepository<BukuUtama, String>, J
     BigDecimal getTotalSaldoPCUSebelumnya(@Param("tanggal") LocalDateTime tanggal);
 
 
+//    @Transactional(readOnly = true)
+//    Optional<BukuUtama> findTop1ByJenisRekeningIgnoreCaseAndTanggalLessThanOrderByTanggalDesc
+//            (@Param("jenisRekening") String jenisRekening,
+//             @Param("tanggal") LocalDateTime tanggal);
+
+    @Query("SELECT b FROM BukuUtama b WHERE UPPER(b.jenisRekening) = UPPER(:jenisRekening) AND b.tanggal < :tanggal ORDER BY b.tanggal DESC LIMIT 1")
+    Optional<BukuUtama> findTop1ByJenisRekeningAndTanggalBefore(@Param("jenisRekening") String jenisRekening,
+                                                                @Param("tanggal") LocalDateTime tanggal);
+
     @Transactional(readOnly = true)
-    Optional<BukuUtama> findTop1ByJenisRekeningIgnoreCaseAndTanggalLessThanOrderByTanggalDesc
-            (@Param("jenisRekening") String jenisRekening,
-             @Param("tanggal") LocalDateTime tanggal);
+    Optional<BukuUtama> findFirstByJenisRekeningAndTanggalBeforeOrderByTanggalDesc(String jenisRekening, LocalDateTime tanggal);
+
 
     @Query("SELECT b FROM BukuUtama b WHERE b.akun.kodeAkun = :kodeAkun")
     List<BukuUtama>findByKodeAkun(@Param("kodeAkun") String kodeAkun);
