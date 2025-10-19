@@ -1,9 +1,6 @@
 package brajaka.demo.service;
 
-import brajaka.demo.dto.BukuUtamaDto;
-import brajaka.demo.dto.BukuUtamaMapper;
-import brajaka.demo.dto.HistoriSaldoDto;
-import brajaka.demo.dto.LaporanGroupDto;
+import brajaka.demo.dto.*;
 import brajaka.demo.model.*;
 import brajaka.demo.repository.AkunRepository;
 import brajaka.demo.repository.BukuUtamaRepository;
@@ -245,19 +242,7 @@ public class BukuUtamaService {
 
     @Cacheable(value = "saldoTerakhir", key = "#jenisRekening")
     public BigDecimal getSaldoTerakhirSampaiTanggal(LocalDateTime tanggal, String jenisRekening) {
-//        return bukuUtamaRepository.findTop1ByJenisRekeningIgnoreCaseAndTanggalLessThanOrderByTanggalDesc(jenisRekening, tanggal)
-//                .stream()
-//                .findFirst()
-//                .map(buku -> {
-//                    switch (jenisRekening) {
-//                        case "Cash": return buku.getSaldoCash();
-//                        case "Main BCA": return buku.getSaldoMainBCA();
-//                        case "BCA Dir": return buku.getSaldoBCADir();
-//                        case "PCU": return buku.getSaldoPCU();
-//                        default:return BigDecimal.ZERO;
-//                    }
-//                })
-//                .orElse(BigDecimal.ZERO);
+
         Optional<BukuUtama> bukuOpt = bukuUtamaRepository.findFirstByJenisRekeningAndTanggalBeforeOrderByTanggalDesc(jenisRekening, tanggal);
 
         if (bukuOpt.isPresent()) {
@@ -291,9 +276,6 @@ public class BukuUtamaService {
                 })
                 .toList();
 
-//                    LaporanGroupDto dto = new LaporanGroupDto(kode, nama, totalMasuk, totalKeluar);
-//                    return dto;
-//        }).toList();
     }
     public List<LaporanGroupDto> getLaporanGroupByKegiatan() {
         return bukuUtamaRepository.findTotalPerKodeKegiatan().stream().map(obj -> {
@@ -365,6 +347,24 @@ public class BukuUtamaService {
             case "PCU" -> BukuUtama::getSaldoPCU;
             default -> b -> BigDecimal.ZERO;
         };
+    }
+
+    public List<UangMasukRekapDto>getRekapUangMasuk(){
+        return bukuUtamaRepository.rekapUangMasuk().stream()
+                .map(obj -> new UangMasukRekapDto(
+                        ((java.sql.Date)obj[0]).toLocalDate(),
+                        (String) obj[1],
+                        (BigDecimal) obj[2]
+                )).toList();
+    }
+
+    public List<UangKeluarRekapDto>getRekapUangKeluar(){
+        return bukuUtamaRepository.rekapUangKeluar().stream()
+                .map(obj -> new UangKeluarRekapDto(
+                        ((java.sql.Date)obj[0]).toLocalDate(),
+                        (String) obj[1],
+                        (BigDecimal) obj[2]
+                )).toList();
     }
 
     private BigDecimal hitungSaldoCash(BigDecimal masuk, BigDecimal keluar) {

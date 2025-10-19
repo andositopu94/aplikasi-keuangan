@@ -75,4 +75,12 @@ public interface BukuUtamaRepository extends JpaRepository<BukuUtama, String>, J
 
     @EntityGraph(attributePaths = {"akun", "kegiatan"})
     Page<BukuUtama> findAll(Specification<BukuUtama> spec, Pageable pageable);
+
+    @Query("SELECT DATE(b.tanggal), b.jenisRekening, SUM(b.nominalMasuk) " +
+            "FROM BukuUtama b GROUP BY DATE(b.tanggal), b.jenisRekening ORDER BY DATE(b.tanggal) ASC")
+    List<Object[]> rekapUangMasuk();
+
+    @Query("SELECT DATE(b.tanggal), b.jenisRekening, SUM(b.nominalKeluar) " +
+            "FROM BukuUtama b GROUP BY DATE(b.tanggal), b.jenisRekening ORDER BY DATE(b.tanggal) ASC")
+    List<Object[]> rekapUangKeluar();
 }

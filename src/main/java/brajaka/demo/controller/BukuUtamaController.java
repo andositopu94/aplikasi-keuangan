@@ -21,6 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -102,6 +103,7 @@ public class BukuUtamaController {
                 .orElse(ResponseEntity.notFound().build());
     }
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPERVISI')")
     public ResponseEntity<?> createBukuUtama(@RequestBody @Valid BukuUtamaDto bukuUtamaDto, BindingResult result){
         if (result.hasErrors()){
             Map<String, String> errors = new HashMap<>();
@@ -136,6 +138,7 @@ public class BukuUtamaController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('SUPERVISI')")
     public ResponseEntity<Void> deleteBukuUtama(@PathVariable String id){
         BukuUtama existing= bukuUtamaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Data Tidak Ditemukan"));
@@ -251,6 +254,7 @@ public class BukuUtamaController {
 //                .orElse(ResponseEntity.notFound().build());
 //    }
 @PutMapping("/{traceNumber}")
+@PreAuthorize("hasRole('ADMIN') or hasRole('SUPERVISI')")
 public ResponseEntity<?> updateBukuUtama(
         @PathVariable String traceNumber,
         @RequestBody @Valid BukuUtamaDto dto,

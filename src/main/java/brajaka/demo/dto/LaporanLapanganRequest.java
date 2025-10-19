@@ -1,5 +1,7 @@
 package brajaka.demo.dto;
 
+import jakarta.validation.constraints.PositiveOrZero;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -9,7 +11,9 @@ public class LaporanLapanganRequest {
     private String kodeLapangan;
     private String deskripsi;
     private String kodeAkun;
+    @PositiveOrZero(message = "Debit harus bernilai positif atau nol")
     private BigDecimal debit;
+    @PositiveOrZero(message = "Kredit harus bernilai positif atau nol")
     private BigDecimal kredit;
     private String keterangan;
     private String kodeKegiatan;

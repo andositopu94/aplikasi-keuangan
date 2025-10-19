@@ -1,13 +1,15 @@
 package brajaka.demo.controller;
 
+import brajaka.demo.dto.AkunDto;
 import brajaka.demo.model.Akun;
 import brajaka.demo.repository.AkunRepository;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/akun")
@@ -26,8 +28,15 @@ public class AkunController {
         }
 
         @PostMapping
-        public Akun createAkun(@RequestBody Akun akun) {
-            return repository.save(akun);
+        public ResponseEntity<?> createAkun(@RequestBody AkunDto dto) {
+            if (repository.existsById(dto.getKodeAkun())) {
+                return ResponseEntity.badRequest().body(Map.of("Kode Akun", "Sudah digunakan"));
+            }
+
+            Akun akun = new Akun();
+            akun.setKodeAkun(dto.getKodeAkun());
+            akun.setNamaAkun(dto.getNamaAkun());
+            return ResponseEntity.ok(repository.save(akun));
         }
 
         @GetMapping("/{kode}")
@@ -38,8 +47,32 @@ public class AkunController {
         }
 
         @DeleteMapping("/{kode}")
-        public void deleteAkun(@PathVariable String kode) {
+        public ResponseEntity<Void> deleteAkun(@PathVariable String kode) {
+            if (!repository.existsById(kode)) {
+                return ResponseEntity.notFound().build();
+            }
             repository.deleteById(kode);
+            return ResponseEntity.noContent().build();
+        }
+
+        @PutMapping("/{kode}")
+        public ResponseEntity<?>updateAkun(@PathVariable String kode,
+                                              @Valid @RequestBody AkunDto dto)
+        {
+            if (!repository.existsById(kode)) {
+                return ResponseEntity.notFound().build();
+            }
+            if (!kode.equals(dto.getKodeAkun())) {
+                if (repository.existsById(dto.getKodeAkun()))
+                    return ResponseEntity.badRequest().body(Map.of("Kode Akun", "Sudah digunakan"));
+            }
+            Akun akun = new Akun();
+            akun.setKodeAkun(dto.getKodeAkun());
+            akun.setNamaAkun(dto.getNamaAkun());
+
+            if (!kode.equals(dto.getKodeAkun())) {repository.deleteById(kode);}
+
+            return ResponseEntity.ok(repository.save(akun));
         }
     }
 

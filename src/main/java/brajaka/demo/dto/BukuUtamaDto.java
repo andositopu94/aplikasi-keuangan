@@ -1,23 +1,34 @@
 package brajaka.demo.dto;
 
 import brajaka.demo.validation.NotFuture;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class BukuUtamaDto {
     private String traceNumber;
+    @NotNull(message = "Tanggal tidak boleh null")
     @NotFuture
     private LocalDateTime tanggal;
+    @NotBlank(message = "Kode transaksi tidak boleh kosong")
+    @Size(max = 10, message = "Kode transaksi maksimal 20 karakter")
     private String kodeTransaksi;
+    @PositiveOrZero(message = "Nominal masuk harus bernilai positif atau nol")
     private BigDecimal nominalMasuk;
+    @PositiveOrZero(message = "Nominal keluar harus bernilai positif atau nol")
     private BigDecimal nominalKeluar;
     private String sumberRekening;
     private String rekeningTujuan;
     private String jenisRekening;
     private String deskripsi;
+    @NotBlank(message = "Kode akun tidak boleh kosong")
     private String kodeAkun;
     private String namaAkun;
+    @NotBlank(message = "Kode kegiatan tidak boleh kosong")
     private String kodeKegiatan;
     private String namaKegiatan;
     private BigDecimal saldoMainBCA;
