@@ -50,8 +50,11 @@ public interface BukuUtamaRepository extends JpaRepository<BukuUtama, String>, J
     @Query("SELECT b FROM BukuUtama b WHERE b.akun.kodeAkun = :kodeAkun")
     List<BukuUtama>findByKodeAkun(@Param("kodeAkun") String kodeAkun);
 
-    @Query("SELECT b FROM BukuUtama b WHERE b.kegiatan.kodeKegiatan = :kodeKegiatan")
-    List<BukuUtama>findByKodeKegiatan(@Param("kodeKegiatan") String kodeKegiatan);
+//    @Query("SELECT b FROM BukuUtama b WHERE b.kegiatan.kodeKegiatan = :kodeKegiatan")
+//    List<BukuUtama>findByKodeKegiatan(@Param("kodeKegiatan") String kodeKegiatan);
+     @Query("SELECT b FROM BukuUtama b WHERE b.kegiatan.kodeKegiatan = :kodeKegiatan")
+     List<BukuUtama> findByKegiatan_KodeKegiatan(@Param("kodeKegiatan") String kodeKegiatan);
+
     List<BukuUtama>findByTanggalBetween(LocalDateTime start, LocalDateTime end);
 
 
@@ -83,4 +86,5 @@ public interface BukuUtamaRepository extends JpaRepository<BukuUtama, String>, J
     @Query("SELECT DATE(b.tanggal), b.jenisRekening, SUM(b.nominalKeluar) " +
             "FROM BukuUtama b GROUP BY DATE(b.tanggal), b.jenisRekening ORDER BY DATE(b.tanggal) ASC")
     List<Object[]> rekapUangKeluar();
+
 }

@@ -9,6 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -22,6 +25,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+
 @Transactional
 @Service
 public class BukuUtamaService {
@@ -74,6 +79,11 @@ public class BukuUtamaService {
         }catch (Exception e){
             log.error("gagal update saldo async", e);
         }
+    }
+
+    public Page<BukuUtamaDto>getAll(Specification<BukuUtama> spec, Pageable pageable){
+        Page<BukuUtama> entities = bukuUtamaRepository.findAll(spec, pageable);
+        return entities.map(BukuUtamaMapper::toDTO);
     }
 
     public BukuUtamaDto updateBukuUtama(String id, BukuUtamaDto dto) {
@@ -366,6 +376,13 @@ public class BukuUtamaService {
                         (BigDecimal) obj[2]
                 )).toList();
     }
+
+        public List<BukuUtamaDto>getBukuUtamaByKodeKegiatan(String kodeKegiatan){
+            List<BukuUtama> entities = bukuUtamaRepository.findByKegiatan_KodeKegiatan(kodeKegiatan);
+            return entities.stream()
+                    .map(BukuUtamaMapper::toDTO)
+                    .collect(Collectors.toList());
+        }
 
     private BigDecimal hitungSaldoCash(BigDecimal masuk, BigDecimal keluar) {
         return masuk.subtract(keluar);

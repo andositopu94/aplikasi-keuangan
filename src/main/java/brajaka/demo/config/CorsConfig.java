@@ -20,6 +20,7 @@ public class CorsConfig {
         config.setAllowedOriginPatterns(Arrays.asList("http://localhost:3000", "http://localhost:3001"));
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
+        config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

@@ -1,6 +1,5 @@
 package brajaka.demo.controller;
 
-import brajaka.demo.config.PaginationUtil;
 import brajaka.demo.dto.BukuUtamaDto;
 import brajaka.demo.dto.BukuUtamaMapper;
 import brajaka.demo.dto.HistoriSaldoDto;
@@ -17,6 +16,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpHeaders;
@@ -55,17 +55,22 @@ public class BukuUtamaController {
 
     @GetMapping
     public Page<BukuUtamaDto>getAll(@RequestParam(required = false) String kodeAkun,
+                                    @RequestParam(required = false) String kodeKegiatan,
                                     @RequestParam(required = false) String jenisRekening,
                                     @RequestParam(required = false) String tanggal,
                                     @RequestParam(required = false) String search,
                                     @RequestParam(defaultValue = "0") int page,
                                     @RequestParam(defaultValue = "10") int size,
-                                    @RequestParam(defaultValue = "tanggal, asc") String[] sort){
+                                    @RequestParam(defaultValue = "tanggal, desc") String[] sort){
         Specification<BukuUtama> spec = Specification.where(null);
 
         if (kodeAkun != null) {
             spec = spec.and((root, query, cb) ->
                     cb.equal(root.get("akun").get("kodeAkun"), kodeAkun));
+        }
+        if (kodeKegiatan != null && !kodeKegiatan.isEmpty()) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("kegiatan").get("kodeKegiatan"), kodeKegiatan));
         }
 
         if (jenisRekening != null && !jenisRekening.trim().isEmpty()) {
@@ -89,9 +94,11 @@ public class BukuUtamaController {
                 );
             });
         }
-        Sort setOrder = PaginationUtil.parseSort(sort);
-        return bukuUtamaRepository.findAll(spec, PageRequest.of(page, size, setOrder))
-                .map(BukuUtamaMapper::toDTO);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sort[0], sort[1]));
+//        Sort setOrder = PaginationUtil.parseSort(sort);
+//        return bukuUtamaRepository.findAll(spec, PageRequest.of(page, size, setOrder))
+//                .map(BukuUtamaMapper::toDTO);
+        return bukuUtamaService.getAll(spec, pageable);
     }
 
     //CRUD
@@ -220,39 +227,6 @@ public class BukuUtamaController {
         return ResponseEntity.ok("Saldo Berhasil diperbaharui");
     }
 
-//    @PutMapping("/{traceNumber}")
-//    public ResponseEntity<BukuUtamaDto> updateBukuUtama(
-//            @PathVariable String traceNumber,
-//            @RequestBody @Valid BukuUtamaDto dto) {
-//
-//        return bukuUtamaRepository.findById(traceNumber)
-//                .map(existing -> {
-//                    // 1. update scalar fields
-//                    existing.setTanggal(dto.getTanggal());
-//                    existing.setKodeTransaksi(dto.getKodeTransaksi());
-//                    existing.setJenisRekening(dto.getJenisRekening());
-//                    existing.setNominalMasuk(dto.getNominalMasuk());
-//                    existing.setNominalKeluar(dto.getNominalKeluar());
-//                    existing.setSumberRekening(dto.getSumberRekening());
-//                    existing.setRekeningTujuan(dto.getRekeningTujuan());
-//                    existing.setDeskripsi(dto.getDeskripsi());
-//
-//                    // 2. update relations
-//                    Akun akun = akunRepository.findById(dto.getKodeAkun())
-//                            .orElseThrow(() -> new RuntimeException("Akun tidak ditemukan"));
-//                    existing.setAkun(akun);
-//
-//                    Kegiatan kegiatan = kegiatanRepository.findById(dto.getKodeKegiatan())
-//                            .orElseThrow(() -> new RuntimeException("Kegiatan tidak ditemukan"));
-//                    existing.setKegiatan(kegiatan);
-//
-//                    BukuUtama saved = bukuUtamaRepository.save(existing);
-//                    bukuUtamaService.updateSaldoBerantai(saved.getTanggal()); // re-calc saldo
-//
-//                    return ResponseEntity.ok(BukuUtamaMapper.toDTO(saved));
-//                })
-//                .orElse(ResponseEntity.notFound().build());
-//    }
 @PutMapping("/{traceNumber}")
 @PreAuthorize("hasRole('ADMIN') or hasRole('SUPERVISI')")
 public ResponseEntity<?> updateBukuUtama(

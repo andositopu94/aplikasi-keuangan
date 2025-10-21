@@ -16,7 +16,7 @@ public class UserDetailsServiceImpl implements UserDetailsService{
 
     static {
         users.put("admin", new User("admin", "admin123", brajaka.demo.config.UserRole.ADMIN)); // password: adminpass
-        users.put("supervisor", new User("supervisor", "{noop}supervisor123", UserRole.SUPERVISI));
+        users.put("supervisor", new User("supervisor", "supervisor123", UserRole.SUPERVISI));
         users.put("user", new User("user", "{noop}user123", UserRole.USER));
     }
     @Override
