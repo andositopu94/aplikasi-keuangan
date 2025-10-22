@@ -59,7 +59,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/api/auth/login").permitAll() // Izinkan login
                         .requestMatchers("/api/laporan-lapangan/files/**").permitAll() // Izinkan akses ke statis jika perlu
-                        .requestMatchers("/api/**").hasAnyRole("ADMIN", "SUPERVISI", "USER_BIASA") // Semua endpoint api lainnya perlu role
+                        .requestMatchers("/api/**").hasAnyRole("ADMIN", "SUPERVISI", "USER") // Semua endpoint api lainnya perlu role
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

@@ -1,7 +1,7 @@
-package brajaka.demo.config;
+    package brajaka.demo.config;
 
-public enum UserRole {
-    ADMIN,
-    USER,
-    SUPERVISI
-}
+    public enum UserRole {
+        ADMIN,
+        USER,
+        SUPERVISI
+    }
