@@ -16,9 +16,11 @@ public class LaporanLapanganMapper {
 
         if (entity.getAkun() != null){
             dto.setKodeAkun(entity.getAkun().getKodeAkun());
+            dto.setNamaAkun(entity.getAkun().getNamaAkun());
         }
         if (entity.getKegiatan() != null){
             dto.setKodeKegiatan(entity.getKegiatan().getKodeKegiatan());
+            dto.setNamaKegiatan(entity.getKegiatan().getNamaKegiatan());
         }
         dto.setNamaUser(entity.getNamaUser());
         return dto;

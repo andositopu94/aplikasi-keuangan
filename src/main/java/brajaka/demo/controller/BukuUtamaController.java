@@ -54,14 +54,14 @@ public class BukuUtamaController {
     }
 
     @GetMapping
-    public Page<BukuUtamaDto>getAll(@RequestParam(required = false) String kodeAkun,
+    public ResponseEntity<?>getAll(@RequestParam(required = false) String kodeAkun,
                                     @RequestParam(required = false) String kodeKegiatan,
                                     @RequestParam(required = false) String jenisRekening,
                                     @RequestParam(required = false) String tanggal,
                                     @RequestParam(required = false) String search,
                                     @RequestParam(defaultValue = "0") int page,
                                     @RequestParam(defaultValue = "10") int size,
-                                    @RequestParam(defaultValue = "tanggal, desc") String[] sort){
+                                    @RequestParam(defaultValue = "tanggal, asc") String[] sort){
         Specification<BukuUtama> spec = Specification.where(null);
 
         if (kodeAkun != null) {
@@ -84,7 +84,6 @@ public class BukuUtamaController {
         }
         if (search != null && !search.isEmpty()){
             String likePattern = "%" + search.toLowerCase() + "%";
-
             spec = spec.and((root, query, cb) -> {
                 return cb.or(
                         cb.like(cb.lower(root.get("deskripsi")), likePattern),
@@ -94,11 +93,15 @@ public class BukuUtamaController {
                 );
             });
         }
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sort[0], sort[1]));
+        String sortField = (sort.length>0) ? sort[0] : "tanggal";
+        String sortDir = (sort.length>1) ? sort[1] : "asc";
+        Sort.Direction direction = sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
+        Page<BukuUtamaDto> result = bukuUtamaService.getAll(spec, pageable);
 //        Sort setOrder = PaginationUtil.parseSort(sort);
 //        return bukuUtamaRepository.findAll(spec, PageRequest.of(page, size, setOrder))
 //                .map(BukuUtamaMapper::toDTO);
-        return bukuUtamaService.getAll(spec, pageable);
+        return ResponseEntity.ok(result);
     }
 
     //CRUD
@@ -123,9 +126,9 @@ public class BukuUtamaController {
             return ResponseEntity.badRequest().body(Map.of("Tanggal", "Tanggal tidak boleh lebih dari hari ini"));
         }
 
-        Akun akun = akunRepository.findById(bukuUtamaDto.getKodeAkun()).orElseThrow(() ->
+        Akun akun = akunRepository.findByKodeAkun(bukuUtamaDto.getKodeAkun()).orElseThrow(() ->
                 new RuntimeException("Akun tidak ditemukan!"));
-        Kegiatan kegiatan = kegiatanRepository.findById(bukuUtamaDto.getKodeKegiatan())
+        Kegiatan kegiatan = kegiatanRepository.findByKodeKegiatan(bukuUtamaDto.getKodeKegiatan())
                 .orElseThrow(() -> new RuntimeException("Kode kegiatan tidak ditemukan!"));
 
         BukuUtama entity= BukuUtamaMapper.toEntity(bukuUtamaDto, akunRepository, kegiatanRepository);
@@ -161,16 +164,28 @@ public class BukuUtamaController {
 
 
     @GetMapping("/saldo")
-    public Map<String, BigDecimal> getSaldoTerakir(){
-        LocalDateTime now = LocalDateTime.now();
-        Map<String, BigDecimal> saldoMap = new HashMap<>();
+    public ResponseEntity<Map<String, Double>> getSaldoTerakir(){
+//        LocalDateTime now = LocalDateTime.now();
+        Map<String, Double> saldoMap = new HashMap<>();
 
-        saldoMap.put("Cash", bukuUtamaService.getSaldoTerakhirSampaiTanggal(now, "Cash"));
-        saldoMap.put("Main BCA", bukuUtamaService.getSaldoTerakhirSampaiTanggal(now, "Main BCA"));
-        saldoMap.put("BCA Dir", bukuUtamaService.getSaldoTerakhirSampaiTanggal(now, "BCA Dir"));
-        saldoMap.put("PCU", bukuUtamaService.getSaldoTerakhirSampaiTanggal(now,"PCU"));
+        double cash = bukuUtamaRepository.sumSaldoByJenisRekening("Cash").orElse(0.0);
+        double mainBca = bukuUtamaRepository.sumSaldoByJenisRekening("Main BCA").orElse(0.0);
+        double bcaDir = bukuUtamaRepository.sumSaldoByJenisRekening("BCA Dir").orElse(0.0);
+        double pcu = bukuUtamaRepository.sumSaldoByJenisRekening("PCU").orElse(0.0);
 
-        return saldoMap;
+        saldoMap.put("Cash", cash);
+        saldoMap.put("Main BCA", mainBca);
+        saldoMap.put("BCA Dir", bcaDir);
+        saldoMap.put("PCU", pcu);
+
+        return ResponseEntity.ok(saldoMap);
+
+//        saldoMap.put("Cash", bukuUtamaService.getSaldoTerakhirSampaiTanggal(now, "Cash"));
+//        saldoMap.put("Main BCA", bukuUtamaService.getSaldoTerakhirSampaiTanggal(now, "Main BCA"));
+//        saldoMap.put("BCA Dir", bukuUtamaService.getSaldoTerakhirSampaiTanggal(now, "BCA Dir"));
+//        saldoMap.put("PCU", bukuUtamaService.getSaldoTerakhirSampaiTanggal(now,"PCU"));
+//
+//        return saldoMap;
     }
 
 //    @Cacheable(value = "historiAll", key = "#tanggalAwal.toString() + '_' + #tanggalAkhir.toString()")
@@ -243,12 +258,12 @@ public ResponseEntity<?> updateBukuUtama(
     try {
         return bukuUtamaRepository.findById(traceNumber)
                 .map(existing -> {
-                    // Validasi tanggal
+
                     if (dto.getTanggal().toLocalDate().isAfter(LocalDate.now())) {
                         throw new RuntimeException("Tanggal tidak boleh lebih dari hari ini");
                     }
 
-                    // Update fields
+
                     existing.setTanggal(dto.getTanggal());
                     existing.setKodeTransaksi(dto.getKodeTransaksi());
                     existing.setJenisRekening(dto.getJenisRekening());
@@ -258,7 +273,7 @@ public ResponseEntity<?> updateBukuUtama(
                     existing.setRekeningTujuan(dto.getRekeningTujuan());
                     existing.setDeskripsi(dto.getDeskripsi());
 
-                    // Update relations
+
                     if (dto.getKodeAkun() != null) {
                         Akun akun = akunRepository.findById(dto.getKodeAkun())
                                 .orElseThrow(() -> new RuntimeException("Akun tidak ditemukan"));

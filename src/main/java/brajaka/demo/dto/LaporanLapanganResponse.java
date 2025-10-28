@@ -13,7 +13,9 @@ public class LaporanLapanganResponse {
     private String keterangan;
     private String buktiPath;
     private String kodeAkun;
+    private String namaAkun;
     private String kodeKegiatan;
+    private String namaKegiatan;
     private String namaUser;
 
     public Long getId() {
@@ -102,5 +104,21 @@ public class LaporanLapanganResponse {
 
     public void setNamaUser(String namaUser) {
         this.namaUser = namaUser;
+    }
+
+    public String getNamaAkun() {
+        return namaAkun;
+    }
+
+    public void setNamaAkun(String namaAkun) {
+        this.namaAkun = namaAkun;
+    }
+
+    public String getNamaKegiatan() {
+        return namaKegiatan;
+    }
+
+    public void setNamaKegiatan(String namaKegiatan) {
+        this.namaKegiatan = namaKegiatan;
     }
 }

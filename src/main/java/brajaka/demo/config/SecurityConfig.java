@@ -4,6 +4,8 @@ import brajaka.demo.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -11,7 +13,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -29,13 +31,14 @@ public class SecurityConfig {
     private JwtRequestFilter jwtRequestFilter;
 
     @Autowired
+    @Lazy
     private UserDetailsServiceImpl userDetailsService;
 
     @Bean
     public PasswordEncoder passwordEncoder(){
 
-//        return new BCryptPasswordEncoder();
-        return NoOpPasswordEncoder.getInstance();
+        return new BCryptPasswordEncoder();
+//        return NoOpPasswordEncoder.getInstance();
     }
 
     @Bean
@@ -48,7 +51,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManagerBean(AuthenticationConfiguration config) throws Exception {
-        AuthenticationManager authenticationManager = config.getAuthenticationManager();
+//        AuthenticationManager authenticationManager = config.getAuthenticationManager();
         return config.getAuthenticationManager();
     }
 
@@ -57,9 +60,19 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/api/auth/login").permitAll() // Izinkan login
-                        .requestMatchers("/api/laporan-lapangan/files/**").permitAll() // Izinkan akses ke statis jika perlu
-                        .requestMatchers("/api/**").hasAnyRole("ADMIN", "SUPERVISI", "USER") // Semua endpoint api lainnya perlu role
+                        .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/laporan-lapangan/files/**").permitAll()
+
+                        // ✅ GET boleh untuk semua role
+                        .requestMatchers(HttpMethod.GET, "/api/buku-utama/saldo").hasAnyAuthority("ADMIN", "SUPERVISI", "USER")
+                        .requestMatchers(HttpMethod.GET, "/api/**").authenticated()
+
+                        // ✅ POST, PUT, DELETE hanya untuk ADMIN dan SUPERVISI
+                        .requestMatchers(HttpMethod.POST, "/api/**").hasAnyAuthority("ADMIN", "SUPERVISI")
+                        .requestMatchers(HttpMethod.PUT, "/api/**").hasAnyAuthority("ADMIN", "SUPERVISI")
+                        .requestMatchers(HttpMethod.DELETE, "/api/**").hasAnyAuthority("ADMIN", "SUPERVISI")
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -70,6 +83,7 @@ public class SecurityConfig {
         return http.build();
     }
 
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -77,9 +91,9 @@ public class SecurityConfig {
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
 }

@@ -1,7 +1,6 @@
 package brajaka.demo.controller;
 
 import brajaka.demo.config.JwtUtil;
-import brajaka.demo.model.User;
 import brajaka.demo.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -42,11 +41,36 @@ public class AuthController {
         final UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         final String jwt = jwtUtil.generateToken(userDetails);
 
+        String role = userDetails.getAuthorities().stream().findFirst()
+                .map(auth -> auth.getAuthority()).orElse("USER");
+
         Map<String, String> response = new HashMap<>();
         response.put("token", jwt);
         response.put("username", userDetails.getUsername());
-        response.put("role", ((User)userDetails).getRole().name());
+        response.put("role", role);
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody Map<String, String> registerRequest) {
+        String username = registerRequest.get("username");
+        String password = registerRequest.get("password");
+        String role = registerRequest.getOrDefault("role", "USER").toUpperCase();
+
+        try {
+            if (username == null || username.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Username Tidak Boleh Kosong"));
+            }
+            if (password == null || password.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Password Tidak Boleh Kosong"));
+            }
+            userDetailsService.registerUser(username, password, role);
+
+            return ResponseEntity.ok(Map.of("message", "User registered successfully",
+                    "username", username, "role", role));
+        }catch (RuntimeException e){
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 }

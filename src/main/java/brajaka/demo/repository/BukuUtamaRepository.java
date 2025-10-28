@@ -87,4 +87,6 @@ public interface BukuUtamaRepository extends JpaRepository<BukuUtama, String>, J
             "FROM BukuUtama b GROUP BY DATE(b.tanggal), b.jenisRekening ORDER BY DATE(b.tanggal) ASC")
     List<Object[]> rekapUangKeluar();
 
+    @Query("SELECT COALESCE(SUM(CASE WHEN UPPER(b.jenisRekening) = 'MAIN BCA' THEN COALESCE(b.saldoMainBCA, 0) WHEN UPPER(b.jenisRekening) = 'BCA DIR' THEN COALESCE(b.saldoBCADir, 0) WHEN UPPER(b.jenisRekening) = 'PCU' THEN COALESCE(b.saldoPCU, 0) WHEN UPPER(b.jenisRekening) = 'CASH' THEN COALESCE(b.saldoCash, 0) ELSE 0 END), 0) FROM BukuUtama b")
+    Optional<Double>sumSaldoByJenisRekening(@Param("jenisRekening") String jenisRekening);
 }
