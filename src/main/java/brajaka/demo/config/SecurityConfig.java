@@ -65,13 +65,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/laporan-lapangan/files/**").permitAll()
 
                         // ✅ GET boleh untuk semua role
-                        .requestMatchers(HttpMethod.GET, "/api/buku-utama/saldo").hasAnyAuthority("ADMIN", "SUPERVISI", "USER")
+                        .requestMatchers(HttpMethod.GET, "/api/buku-utama/saldo").hasAnyRole("ADMIN", "SUPERVISI", "USER")
                         .requestMatchers(HttpMethod.GET, "/api/**").authenticated()
 
                         // ✅ POST, PUT, DELETE hanya untuk ADMIN dan SUPERVISI
-                        .requestMatchers(HttpMethod.POST, "/api/**").hasAnyAuthority("ADMIN", "SUPERVISI")
-                        .requestMatchers(HttpMethod.PUT, "/api/**").hasAnyAuthority("ADMIN", "SUPERVISI")
-                        .requestMatchers(HttpMethod.DELETE, "/api/**").hasAnyAuthority("ADMIN", "SUPERVISI")
+                        .requestMatchers(HttpMethod.POST, "/api/**").hasAnyRole("ADMIN", "SUPERVISI")
+                        .requestMatchers(HttpMethod.PUT, "/api/**").hasAnyRole("ADMIN", "SUPERVISI")
+                        .requestMatchers(HttpMethod.DELETE, "/api/**").hasAnyRole("ADMIN", "SUPERVISI")
 
                         .anyRequest().authenticated()
                 )

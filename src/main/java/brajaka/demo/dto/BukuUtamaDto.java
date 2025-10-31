@@ -14,7 +14,7 @@ public class BukuUtamaDto {
     private String traceNumber;
     @NotNull(message = "Tanggal tidak boleh null")
     @NotFuture
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
     private LocalDateTime tanggal;
     @NotBlank(message = "Kode transaksi tidak boleh kosong")
     @Size(max = 10, message = "Kode transaksi maksimal 20 karakter")

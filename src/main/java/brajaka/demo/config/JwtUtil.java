@@ -3,11 +3,11 @@ package brajaka.demo.config;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import org.springframework.beans.factory.annotation.Value;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
@@ -16,21 +16,18 @@ import java.util.function.Function;
 
 @Component
 public class JwtUtil {
-    @Value("${jwt.secret:my32ByteSecretKeyForHS512Algo!12345678901234567890123456789012345}")
-    private String SECRET_KEY;
 
-    private Key getSigningKey(String secret) {
+    private static final String SECRET_KEY = "bRaJaKa-SupEr-SeCrEt-Key-2025-1234567890abcdef"; // panjang > 32
 
-        byte[] keyBytes = secret.getBytes();
-        return new SecretKeySpec(keyBytes, getSigningAlgorithm().getJcaName());
-    }
-    private SignatureAlgorithm getSigningAlgorithm() {
-        return SignatureAlgorithm.HS512;
+    private Key getSigningKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(java.util.Base64.getEncoder().encodeToString(SECRET_KEY.getBytes()));
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
+
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
@@ -42,7 +39,7 @@ public class JwtUtil {
 
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey(SECRET_KEY))
+                .setSigningKey(getSigningKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
@@ -54,15 +51,16 @@ public class JwtUtil {
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, userDetails.getUsername());
-    }
 
-    private String createToken(Map<String, Object> claims, String subject) {
-        return Jwts.builder().setClaims(claims)
-                .setSubject(subject)
+        claims.put("role", userDetails.getAuthorities().iterator().next().getAuthority());
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 hours
-                .signWith(getSigningKey(SECRET_KEY), getSigningAlgorithm()).compact();
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 8))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
     }
 
     public Boolean validateToken(String token, UserDetails userDetails) {
