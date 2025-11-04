@@ -3,14 +3,19 @@ package brajaka.demo.controller;
 import brajaka.demo.dto.KegiatanDto;
 import brajaka.demo.model.Kegiatan;
 import brajaka.demo.repository.KegiatanRepository;
+import brajaka.demo.service.KegiatanService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/kegiatan")
@@ -18,6 +23,9 @@ public class KegiatanController {
 
     @Autowired
     private KegiatanRepository repository;
+
+    @Autowired
+    private KegiatanService kegiatanService;
 
 
     @GetMapping
@@ -55,14 +63,18 @@ public class KegiatanController {
 
     @DeleteMapping("/{kode}")
     @PreAuthorize("hasRole('SUPERVISI')")
-    public ResponseEntity<Void> deleteKegiatan(@PathVariable String kode) {
-        if (!repository.existsById(kode)) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<?> deleteKegiatan(@PathVariable String kode) {
+        try {
+            kegiatanService.deleteKegiatanIfUnused(kode);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", ex.getMessage()));
+        } catch (DataIntegrityViolationException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Kegiatan tidak dapat dihapus karena masih direferensi di entitas lain.");
+        }catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(java.util.Map.of("error", "Terjadi kesalahan internal"));
         }
-        repository.deleteById(kode);
-        return ResponseEntity.noContent().build();
     }
-
     @PutMapping("/{kode}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPERVISI')")
     public ResponseEntity<KegiatanDto> updateKegiatan(@PathVariable String kode, @RequestBody @Valid KegiatanDto dto) {

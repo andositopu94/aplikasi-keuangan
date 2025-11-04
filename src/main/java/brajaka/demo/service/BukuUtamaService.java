@@ -124,6 +124,7 @@ public class BukuUtamaService {
         bukuUtamaRepository.deleteById(id);
     }
 
+    @Transactional
     public void createFromUangMasuk(UangMasuk uangMasuk) {
         if (bukuUtamaRepository.existsById(uangMasuk.getTraceNumber())) {
             throw new RuntimeException("Trace Number sudah terpakai");

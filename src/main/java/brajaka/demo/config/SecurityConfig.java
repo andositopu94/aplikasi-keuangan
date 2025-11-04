@@ -31,6 +31,9 @@ public class SecurityConfig {
     private JwtRequestFilter jwtRequestFilter;
 
     @Autowired
+    private LoginRateLimitingFilter loginRateLimitingFilter;
+
+    @Autowired
     @Lazy
     private UserDetailsServiceImpl userDetailsService;
 
@@ -38,7 +41,6 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder(){
 
         return new BCryptPasswordEncoder();
-//        return NoOpPasswordEncoder.getInstance();
     }
 
     @Bean
@@ -78,7 +80,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         http.authenticationProvider(authenticationProvider());
-        http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(loginRateLimitingFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

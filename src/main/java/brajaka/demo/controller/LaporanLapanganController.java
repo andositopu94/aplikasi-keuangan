@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/laporan-lapangan")
@@ -35,6 +36,14 @@ public class LaporanLapanganController {
     private final KegiatanRepository kegiatanRepository;
     private final FileStrorageService fileStrorageService;
     private final LaporanLapanganService laporanLapanganService;
+
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
+    private static final List<String> ALLOWED_TYPES = List.of(
+            "image/jpeg",
+            "image/png",
+            "image/jpg"
+    );
+
 
     public LaporanLapanganController(LaporanLapanganRepository laporanLapanganRepository,
                                      AkunRepository akunRepository,
@@ -91,6 +100,17 @@ public class LaporanLapanganController {
             @RequestPart("request") @Valid LaporanLapanganRequest request,
             @RequestParam("bukti")MultipartFile bukti) {
 
+            if (bukti.getSize() > MAX_FILE_SIZE) {
+                throw new RuntimeException("File terlalu besar. Ukuran maksimum adalah 10MB.");
+            }
+            if (!ALLOWED_TYPES.contains(bukti.getContentType())) {
+                throw new RuntimeException("Tipe file tidak didukung. Hanya JPG,     PNG yang diizinkan.");
+            }
+
+            //upload ke Minio
+//            String objectName = minioStorageService.storeFile(bukti);
+//            request.setBuktiPath(objectName);
+
             LaporanLapangan saved = laporanLapanganService.createLaporan(request, bukti);
             return ResponseEntity.ok(LaporanLapanganMapper.toResponse(saved));
 
@@ -111,6 +131,9 @@ public class LaporanLapanganController {
 @GetMapping("/files/{filename:.+}")
 public ResponseEntity<byte[]> getFile(@PathVariable String filename) throws IOException {
     Path filePath = Paths.get("uploads").resolve(filename).normalize();
+
+//    String url = minioStorageService.getFileUrl(filename);
+//    return ResponseEntity.ok(Map.of("url", url));
 
     if (!Files.exists(filePath)) {
         return ResponseEntity.notFound().build();
